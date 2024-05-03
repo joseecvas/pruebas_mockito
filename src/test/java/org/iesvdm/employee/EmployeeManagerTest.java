@@ -172,13 +172,23 @@ public class EmployeeManagerTest {
 	public void testExampleOfArgumentCaptor() {
 
 		List<Employee> twoEmployees = new ArrayList<> ();
+		twoEmployees.add ( notToBePaid );
 		twoEmployees.add ( toBePaid );
-		twoEmployees.add (notToBePaid);
 		when ( employeeRepository.findAll () ).thenReturn (twoEmployees);
 		assertThat ( employeeManager.payEmployees () ).isEqualTo (2);
-		ArgumentCaptor idCaptor = ArgumentCaptor.forClass ( String.class );
-		ArgumentCaptor amountCaptor = ArgumentCaptor.forClass ( Double.class );
-		verify ((bankService), times ( 2 )).pay ( (String)idCaptor.capture (), (Double) amountCaptor.capture ());
+
+		ArgumentCaptor<String> idCaptor = ArgumentCaptor.forClass ( String.class );
+		ArgumentCaptor<Double> amountCaptor = ArgumentCaptor.forClass ( Double.class );
+
+		InOrder inorder = inOrder(bankService, employeeRepository);
+		inorder.verify ((bankService), times ( 2 )).pay ( idCaptor.capture (), (Double) amountCaptor.capture ());
+		List<String> idcaptor = idCaptor.getAllValues();
+		assertThat(idcaptor.get(0)).isEqualTo("1");
+		assertThat(idcaptor.get(1)).isEqualTo("2");
+		List<Double> doublesCaptor = amountCaptor.getAllValues();
+		assertThat(doublesCaptor.get(0)).isEqualTo(1000.0);
+		assertThat(doublesCaptor.get(1)).isEqualTo(2000.0);
+		verifyNoMoreInteractions(bankService);
 	}
 
 	/**
